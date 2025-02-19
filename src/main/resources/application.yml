@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: library-events-consumer
+server:
+  port: 8081
