@@ -1,22 +1,35 @@
-#spring:
-#  application:
-#    name: library-events-consumer
-#
-#---
 spring:
+  application:
+    name: library-events-consumer
+
   profiles:
     active: local
+
 server:
   port: 8081
+
 ---
 spring:
   config:
     activate:
       on-profile: local
+
   kafka:
-    topic : "library-events"
     consumer:
-      bootstrap-servers: localhost:9092, localhost:9093,localhost:9094
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
       key-deserializer: org.apache.kafka.common.serialization.IntegerDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: library-events-listener-group
+    topic: library-events  # Custom property to define the topic
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    generate-ddl: true
+
+  h2:
+    console:
+      enabled: true

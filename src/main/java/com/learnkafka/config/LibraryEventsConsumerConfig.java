@@ -40,7 +40,12 @@ public class LibraryEventsConsumerConfig {
         configurer.configure(factory, kafkaConsumerFactory.getIfAvailable(() ->
                 new DefaultKafkaConsumerFactory<>(kafkaProperties.buildConsumerProperties())));
 
-        // Set acknowledgment mode manual
+        //*__for set multiple kafka listeners from same application itself__* ,
+        // it's recommended if your application is not running in cloud like environment
+        factory.setConcurrency(3);
+        // ^it wll spawn 3 threads for kafka listeners
+
+        // *__Set acknowledgment mode manual__*
         //factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         //factory.getContainerProperties().setAckCount(100); // Commit after 100 records
 
