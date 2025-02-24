@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnkafka.entity.Book;
 import com.learnkafka.entity.LibraryEvent;
-import com.learnkafka.jpa.BookRepository;
 import com.learnkafka.jpa.LibraryEventsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ public class LibraryEventsService {
 
     private final ObjectMapper objectMapper;
     private final LibraryEventsRepository libraryEventsRepository;
-    private final BookRepository bookRepository;
 
     @Transactional
     public void processLibraryEvent(ConsumerRecord<Integer, String> consumerRecord) throws JsonProcessingException {
@@ -56,9 +54,6 @@ public class LibraryEventsService {
         LibraryEvent existingEvent = libraryEventsRepository.findById(libraryEvent.getLibraryEventId())
                 .orElseThrow(() -> new IllegalArgumentException("Library Event ID " + libraryEvent.getLibraryEventId() + " not found for update"));
 
-        // Ensure the book exists before updating
-        Book existingBook = bookRepository.findByLibraryEventId(Long.valueOf(libraryEvent.getLibraryEventId()))
-                .orElseThrow(() -> new IllegalArgumentException("Book not found for Library Event ID: " + libraryEvent.getLibraryEventId()));
 
         save(libraryEvent);
         log.info("Successfully updated Library Event: {}", existingEvent);
