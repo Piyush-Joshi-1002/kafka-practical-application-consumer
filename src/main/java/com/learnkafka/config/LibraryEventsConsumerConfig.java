@@ -18,6 +18,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.List;
@@ -35,8 +36,19 @@ public class LibraryEventsConsumerConfig {
 
     public DefaultErrorHandler errorHandler(){
 
-        var fixedBackOff = new FixedBackOff(1000L, 2); //used for retry attempt and duration between each attempt
-        var errorHandler =  new DefaultErrorHandler(fixedBackOff);
+        // FixedBackOff: 1-second delay, max 2 retries
+        FixedBackOff fixedBackOff = new FixedBackOff(1000L, 2); //used for retry attempt and fixed duration between each attempt
+
+        // ExponentialBackOffWithMaxRetries: max 2 retries, initial delay 1 second
+        var expBackOff = new ExponentialBackOffWithMaxRetries(2); // used for max retry attempt and duration between each attempt is exponential
+        expBackOff.setInitialInterval(1000L); // 1-second initial delay
+        expBackOff.setMultiplier(2.0); // Exponential growth factor
+        expBackOff.setMaxElapsedTime(4000L); // Max total wait time
+
+        var errorHandler =  new DefaultErrorHandler(
+//                fixedBackOff
+                expBackOff
+        );
 
         /* exceptions where we don't want our kafka to retry on */
         var exceptionsToIgnoreList = List.of(
@@ -54,6 +66,10 @@ public class LibraryEventsConsumerConfig {
                 }));
 
         /*________End_________*/
+
+
+
+
         return errorHandler;
     }
 
