@@ -43,7 +43,7 @@ public class LibraryEventsConsumerConfig {
         var expBackOff = new ExponentialBackOffWithMaxRetries(2); // used for max retry attempt and duration between each attempt is exponential
         expBackOff.setInitialInterval(1000L); // 1-second initial delay
         expBackOff.setMultiplier(2.0); // Exponential growth factor
-        expBackOff.setMaxElapsedTime(4000L); // Max total wait time
+        //expBackOff.setMaxElapsedTime(2000L); // Max total wait time (It's not working )
 
         var errorHandler =  new DefaultErrorHandler(
 //                fixedBackOff
