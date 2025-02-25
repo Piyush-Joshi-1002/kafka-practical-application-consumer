@@ -144,8 +144,16 @@ class LibraryEventsConsumerTest {
         latch.await(5, TimeUnit.SECONDS);
 
         // then
-        verify(libraryEventsConsumerSpy,times(3)).onMessage(isA(ConsumerRecord.class));
-        verify(libraryEventsServiceSpy,times(3)).processLibraryEvent(isA(ConsumerRecord.class));
+        // Before
+        // Expected three invocations before making IllegalArgumentException non-retriable in the config file
+//        verify(libraryEventsConsumerSpy, times(3)).onMessage(isA(ConsumerRecord.class));
+//        verify(libraryEventsServiceSpy, times(3)).processLibraryEvent(isA(ConsumerRecord.class));
+
+        // After
+        // Changes after making IllegalArgumentException non-retriable in the config file
+        verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+
 
     }
 }
