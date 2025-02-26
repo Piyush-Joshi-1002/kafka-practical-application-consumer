@@ -47,7 +47,7 @@ import com.learnkafka.service.LibraryEventsService;
 @SpringBootTest
 @EmbeddedKafka(topics = {"library-events","library-events.RETRY","library-events.DLT"}, partitions = 3)
 @TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}"
-        , "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}" })
+        , "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}", "retryListener.startup:false" })
 class LibraryEventsConsumerTest {
     @Autowired
     EmbeddedKafkaBroker embeddedKafkaBroker;
