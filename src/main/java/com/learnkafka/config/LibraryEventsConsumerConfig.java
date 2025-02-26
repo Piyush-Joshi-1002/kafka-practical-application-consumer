@@ -46,7 +46,8 @@ public class LibraryEventsConsumerConfig {
     public DeadLetterPublishingRecoverer publishingRecoverer(){
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(template,
                 (r, e) -> {
-                    if (e instanceof RecoverableDataAccessException) {
+                    log.error("Exception in publishingRecoverer : {}", e.getMessage(), e);
+                    if (e.getCause() instanceof RecoverableDataAccessException) {
                         return new TopicPartition(retryTopic, r.partition());
                     }
                     else {
