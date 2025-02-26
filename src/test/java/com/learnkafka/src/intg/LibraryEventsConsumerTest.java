@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -81,10 +82,15 @@ class LibraryEventsConsumerTest {
 
     @BeforeEach
     void setUp() {
-        for(MessageListenerContainer messageListenerContainer : kafkaListenerEndpointRegistry.getAllListenerContainers()){
-            ContainerTestUtils.waitForAssignment(messageListenerContainer, embeddedKafkaBroker.getPartitionsPerTopic());
-
-        }
+        var container = kafkaListenerEndpointRegistry.getAllListenerContainers()
+                .stream()
+                .filter(messageListenerContainer -> Objects.equals(messageListenerContainer.getGroupId(), "library-events-listener-group"))
+                .toList().get(0);
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
+//        for(MessageListenerContainer messageListenerContainer : kafkaListenerEndpointRegistry.getAllListenerContainers()){
+//            ContainerTestUtils.waitForAssignment(messageListenerContainer, embeddedKafkaBroker.getPartitionsPerTopic());
+//
+//        }
     }
 
     @AfterEach
