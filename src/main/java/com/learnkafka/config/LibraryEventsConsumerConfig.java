@@ -1,8 +1,11 @@
 package com.learnkafka.config;
 
 
+import com.learnkafka.service.FailureService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,10 +22,7 @@ import org.springframework.kafka.config.ContainerCustomizer;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.*;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -33,11 +33,35 @@ import java.util.List;
 @Slf4j
 public class LibraryEventsConsumerConfig {
 
+    public static  final String RETRY = "RETRY";
+    public static final String DEAD = "DEAD";
     @Value("${topics.retry}")
     private String retryTopic;
 
     @Value("${topics.dlt}")
     private String daedLetterTopic;
+
+    @Autowired
+    FailureService failureService;
+
+    /*  *___if we have mutliple Recoverable exceptions ___*
+    ________________________________________________________________________________________________
+    *   private static final Set<Class<?>> RETRYABLE_ERRORS = Set.of(
+            RecoverableDataAccessException.class,
+            SomeOtherRecoverableException.class,
+            AnotherRecoverableException.class
+        );
+
+        public DeadLetterPublishingRecoverer publishingRecoverer() {
+            return new DeadLetterPublishingRecoverer(template, (r, e) -> {
+                log.error("Exception in publishingRecoverer : {}", e.getMessage(), e);
+                return RETRYABLE_ERRORS.contains(e.getCause().getClass())
+                    ? new TopicPartition(retryTopic, r.partition())
+                    : new TopicPartition(deadLetterTopic, r.partition());
+            });
+        }
+    * _____________________________________________________________________________________________
+    * */
 
 
     @Autowired
@@ -58,6 +82,21 @@ public class LibraryEventsConsumerConfig {
 
     }
 
+    ConsumerRecordRecoverer consumerRecordRecoverer = (consumerRecord, e) -> {
+        log.error("Exception in consumerRecordRecoverer : {}, and message {}", consumerRecord ,e.getMessage(), e);
+        var record = (ConsumerRecord<Integer,String>) consumerRecord;
+        Integer key = record.key() == null ?0:record.key();
+        if (e.getCause() instanceof RecoverableDataAccessException) {
+            //recovery logic
+            log.info("Inside consumer recovery ");
+            failureService.saveFailedRecord(record,e,RETRY);
+        }
+        else {
+            //non-recovery logic
+            log.info("Inside  consumer non-recovery ");
+            failureService.saveFailedRecord(record,e,DEAD);
+        }
+    };
     private final KafkaProperties kafkaProperties;
 
     public LibraryEventsConsumerConfig(KafkaProperties kafkaProperties) {
@@ -78,7 +117,8 @@ public class LibraryEventsConsumerConfig {
 
         // Error handeler
         var errorHandler =  new DefaultErrorHandler(
-                publishingRecoverer(),
+//              publishingRecoverer(), /* not using for database storage
+                consumerRecordRecoverer,
 //              fixedBackOff
                 expBackOff
         );
@@ -86,7 +126,6 @@ public class LibraryEventsConsumerConfig {
         /* exceptions where we don't want our kafka to retry on */
         var exceptionsToIgnoreList = List.of(
                 IllegalArgumentException.class
-
         );
 
         exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);

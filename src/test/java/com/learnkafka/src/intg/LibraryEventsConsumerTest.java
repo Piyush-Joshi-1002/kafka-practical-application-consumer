@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.learnkafka.jpa.FailureRecordRepository;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -73,6 +74,10 @@ class LibraryEventsConsumerTest {
 
     @Autowired
     LibraryEventsRepository libraryEventsRepository;
+
+
+    @Autowired
+    private FailureRecordRepository failureRecordRepository;
 
     private Consumer<Integer,String> consumer;
 
@@ -191,6 +196,28 @@ class LibraryEventsConsumerTest {
         assertEquals(json,consumerRecord.value());
 
 
+    }
+    @Test
+    void publishUpdateLibraryEvent_null_LibraryEvent_Test_failurerecord_db_save() throws ExecutionException, InterruptedException, JsonProcessingException {
+        // given
+        Integer key = 123;
+        String json = "{\"libraryEventId\":null,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":457,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"XYZ\"}}";
+        kafkaTemplate.sendDefault(json).get();
+
+        //when
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(5, TimeUnit.SECONDS);
+
+        //then
+        verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+
+        var count = failureRecordRepository.count();
+
+        assertEquals(1,count);
+        failureRecordRepository.findAll().forEach(failureRecord -> {
+                    System.out.println("failuerRecord : " + failureRecord);
+                });
     }
 
     @Test
