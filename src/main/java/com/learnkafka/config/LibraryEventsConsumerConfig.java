@@ -36,7 +36,7 @@ public class LibraryEventsConsumerConfig {
     @Value("${topics.retry}")
     private String retryTopic;
 
-    @Value("topics.dlt")
+    @Value("${topics.dlt}")
     private String daedLetterTopic;
 
 
@@ -86,6 +86,7 @@ public class LibraryEventsConsumerConfig {
         /* exceptions where we don't want our kafka to retry on */
         var exceptionsToIgnoreList = List.of(
                 IllegalArgumentException.class
+
         );
 
         exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);

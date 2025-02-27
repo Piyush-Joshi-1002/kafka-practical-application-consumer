@@ -68,7 +68,7 @@ class LibraryEventsConsumerTest {
     @Value("${topics.retry}")
     private String retryTopic;
 
-    @Value("topics.dlt")
+    @Value("${topics.dlt}")
     private String daedLetterTopic;
 
     @Autowired
@@ -177,6 +177,18 @@ class LibraryEventsConsumerTest {
         // Changes after making IllegalArgumentException non-retriable in the config file
         verify(libraryEventsConsumerSpy, times(1)).onMessage(isA(ConsumerRecord.class));
         verify(libraryEventsServiceSpy, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+
+
+
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("group2","true",embeddedKafkaBroker));
+
+        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
+        consumer = new DefaultKafkaConsumerFactory<>(configs,new IntegerDeserializer(),new StringDeserializer()).createConsumer();
+        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer,daedLetterTopic);
+
+        ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer,daedLetterTopic);
+        System.out.println("consumerRecord is : " + consumerRecord.value());
+        assertEquals(json,consumerRecord.value());
 
 
     }
