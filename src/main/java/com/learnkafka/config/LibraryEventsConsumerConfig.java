@@ -35,6 +35,7 @@ public class LibraryEventsConsumerConfig {
 
     public static  final String RETRY = "RETRY";
     public static final String DEAD = "DEAD";
+    public static final String SUCCESS = "SUCCESS";
     @Value("${topics.retry}")
     private String retryTopic;
 

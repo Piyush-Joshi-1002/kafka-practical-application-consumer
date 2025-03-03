@@ -1,15 +1,13 @@
 spring:
-  application:
-    name: library-events-consumer
-
   profiles:
-    active: local
-
+    active: ssl
 server:
   port: 8081
+
 topics:
   retry : 'library-events.RETRY'
   dlt : 'library-events.DLT'
+
 ---
 spring:
   config:
@@ -24,10 +22,11 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.IntegerDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: library-events-listener-group
-    topic: library-events  # Custom property to define the topic
+      auto-offset-reset: latest
     producer:
       bootstrap-servers:
-        - localhost:9092, localhost:9093,localhost:9094
+#        - localhost:9092, localhost:9093,localhost:9094
+        -   localhost:9092
       key-serializer: org.apache.kafka.common.serialization.IntegerSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
   datasource:
@@ -39,7 +38,6 @@ spring:
     generate-ddl: true
     hibernate:
       ddl-auto: create-drop
-
 
   h2:
     console:

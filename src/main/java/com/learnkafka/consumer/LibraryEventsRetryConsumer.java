@@ -15,7 +15,7 @@ public class LibraryEventsRetryConsumer {
     @Autowired
     private LibraryEventsService libraryEventsService;
 
-    @KafkaListener(topics = {"${topics.retry"},
+    @KafkaListener(topics = {"${topics.retry}"},
             groupId = "retry-listener-group",
             autoStartup = "${retryListener.startup:true}"
     )
